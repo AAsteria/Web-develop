@@ -1,0 +1,999 @@
+css3.0讲义
+
+
+"css里程碑"
+    学习css3魔法之前，首先来了解一下css3的要旨和特性---
+
+    1. 模块化
+       w3c 的 CSS Working Group(CSS 工作组)决定将 css 划分成一系列互相独立的模块(css3);
+       独立实现和发布各个模块，利于规范及时更新和发布，及时调整模块的内容 >> 从形式上来说，css3 标准本身已不存在，也不会有css4，5...的后续，完结撒花～
+       正确的理解是，当前标准 CSS 包括了修订后的 css2.1 以及完整模块对它的扩充；模块有不同的level。
+
+       CSS 模块状态：
+           https://www.w3.org/Style/CSS/current-work
+
+
+    2. "新"的意义
+       css3 是 css的最新版本，旨在扩展css2.1;
+
+       它带来了许多期待已久的新特性，例如圆角、阴影、渐变、过渡、动画，以及新的布局方式，例如multi-columns、flex伸缩模型等;
+       实验性特性以浏览器引擎为前缀(vendor-prefixed)，应尽量避免或谨慎地使用，因为在未来它们的语法和语义都有可能被改变。
+
+
+    下面，就让我们一起来学习这个强大的魔法，争取成为一名身怀绝技的法师吧！
+
+
+一、选择器(Selectors)
+
+1. 选择器与规范
+       选择器是一种树状元素匹配的 Pattern，可以高效率的选取 HTML 和 XML 节点。
+
+       运作原理(了解):
+              expression * element -> boolean
+
+              expression: 代表你的选择器
+              element: 代表选中的 HTML / XML 节点
+              两者相乘，代表「逻辑 AND」两者皆为 true，结果才是 true
+
+              通过STSS的机制，决定选择器的运作。应用于文档的STTS规则始终在CSS和CAS规则之前应用。
+              STTS规则不会修改文档本身，而是会在兼容软件中修改文档的内部视图；STTS程序应用到XML的问题尚未解决。
+
+
+       规范(勤查):
+              css3选择器规范最新地址(2018.11.21): https://www.w3.org/TR/selectors/
+              css3选择器规范地址(2011.9.29): https://www.w3.org/TR/2011/REC-css3-selectors-20110929/
+              css3选择器规范旧地址(2005.12.5):https://www.w3.org/TR/2005/WD-css3-selectors-20051215/
+
+
+2. 引入问题
+   1). css的全称？
+
+   2). 样式表的组成？
+          规则：选择器 {声明}
+          声明：css属性: css属性值组成的键值对
+
+   3). 浏览器读取编译css选择器的顺序？ 从右向左。
+
+          浏览器显示一个页面的过程：
+
+              ①用户输入地址，并按回车
+              --> ②浏览器向服务器发送请求，服务器响应并返回数据 -->
+              ③浏览器接收服务器传回的html代码，生成dom树（期间解析到link标签则去下载相应的css文件）-->
+              ④所有外部css文件下载完成后，结合页面中的style标签和标签行内style样式，
+                   构建render树(渲染树)[render树包含了每个dom节点的样式信息：位置，大小，字体，背景等]
+              --> ⑤Rendering Engine(渲染引擎)结合dom树和render树绘制页面(最终将画出完整的render树）
+
+          原理：
+
+              Rendering Engine渲染页面的顺序决定了其读取编译css选择器的顺序；
+              步骤④中，构建render树的过程实质上就是遍历dom树，每次拿出一个dom节点，然后遍历所有的样式规则查找与当前节点匹配的规则，
+              最后将所有匹配成功的规则中定义的样式写入一个render对象中，并将这个render对象挂到render树上(这个render对象和dom节点会以某种方式建立连接，知道彼此的存在)。
+
+              由于每条规则都可能有多层嵌套(大多数情况)，如果采用left-to-right的方式读取css规则，那么大多数规则都将会是不匹配的、需要舍弃的；
+              而如果采取从右到左的方式，那么只要发现最右边的key selector不匹配，那么整条规则就不必再继续匹配，可以迅速舍弃。
+
+              实际上，根据2009年Google和Firefox的测试，从右到左读取编译的方式可以避免70%左右的无效匹配，大大提高效率。
+
+   4). 如何保证兼容性？
+              查看各浏览器的兼容性的网站: https://www.caniuse.com
+
+
+3. 基本选择器
+       通配选择器		* {}
+       元素选择器		div {}
+       ID选择器		 #wrap {}
+       类选择器		 .list {}
+       后代选择器		.list li {}
+
+   基本选择器扩展:
+       (1). 子元素选择器(直接后代选择器)		#wrap > .inner {}
+            ---此类选择器只能匹配到直接后代，不能匹配到深层次的后代元素
+
+       (2). 相邻兄弟选择器 	#wrap #first + .inner {}
+            ---它只会匹配紧跟着的兄弟元素，上面这个例子将匹配#wrap中紧跟着#first的那个.inner元素
+
+       (3). 通用兄弟选择器	  #wrap #first ~ div {}
+            ---它会匹配所有的兄弟元素(不需要紧跟)
+
+       (4). 选择器分组	 h1,h2,h3{}
+            ---此处的逗号我们称之为结合符
+
+
+4. 属性选择器
+       存在和值属性选择器(Attribute presence and value selectors)
+
+           [attr]：该选择器选择包含 attr 属性的所有元素，不论 attr 的值为何。
+           [attr=val]：该选择器仅选择 attr 属性被赋值为 val 的所有元素。
+           [attr~=val]：表示带有以 attr 命名的属性的元素，并且该属性是一个以空格作为分隔的值列表，其中至少一个值为val。
+           [attr|=val] : 选择attr属性的值是val（包括val）或以val-开头的元素。
+
+       子串值属性选择器(Substring matching attribute selectors)
+
+           [attr^=val] : 选择attr属性的值以val开头（包括val）的元素。
+           [attr$=val] : 选择attr属性的值以val结尾（包括val）的元素。
+           [attr*=val] : 选择attr属性的值中包含字符串val的元素。
+
+
+5. 伪类与伪元素选择器(重点）
+       伪类让css3有魔力选中DOM(文档对象模型)之外的其他元素(伪元素)，目的是拿到元素的一些动态。
+
+       (1). 链接伪类(只适用于链接元素a)
+            :link		表示作为超链接，并指向一个未访问的地址的所有锚
+            :visited	表示作为超链接，并指向一个已访问的地址的所有锚
+            :target 	代表一个唯一的页面元素(目标元素)，其id与当前URL片段匹配
+
+            重要代码:
+                   :target{
+                      ...
+                   }
+
+                   :target::before{
+                      content: url(...);
+                   }
+                   /* 在这里，:target伪类用于在目标元素之前放置图像（如果有的话）*/
+
+                   ...
+                   <a href="#div1">...</a><!-- 给元素赋一个url -->
+                   <a href="#div2">...</a>
+
+       (2). 动态伪类(适用于所有的元素)
+            :hover		表示悬浮到元素上
+            :active		表示被用户激活的元素（鼠标点击按下时）
+
+            定义锚点时应注意浏览器缓存，以及定义的顺序---
+            由于a标签的:link和:visited可以覆盖所有a标签的状态，
+            所以当:link，:visited，:hover，:active同时出现在a标签身上时， :link和:visited要放在前面写。
+
+            :visited选择器
+                考虑到用户的隐私，只有下列的属性才能被应用到已访问链接：
+                   color
+                   background-color
+                   border-color
+
+       (3). 表单相关伪类
+            :enabled	匹配可编辑的表单
+            :disable	匹配被禁用的表单
+            :checked	匹配被选中的表单
+            :focus	匹配获焦的表单
+
+            重要代码:
+                  input:enabled{
+                     ...
+                  }
+                  input:disabled{
+                     ...
+                  }
+                  /* 被禁用的input元素既不可用，也不可点击。
+                     可以设置 disabled 属性，直到满足某些其他的条件为止（比如选择了一个复选框等等）。
+                     如果需要将 input 元素的值切换为可用，就需要通过 JavaScript来删除 disabled 值。
+                     注意：disabled 属性无法与 <input type="hidden"> 一起使用。*/
+
+                  input:checked{
+                     ...
+                  }
+
+                  ...
+                  <input type="text"/>
+                  <input type="text" disabled="disabled"/><!-- 添加一个禁用输入字段 -->
+                  <input type="checkbox"/>
+
+            练习: 自定义单选按钮
+                  <!DOCTYPE html>
+                  <html lang="en">
+                  <head>
+                      <meta charset="UTF-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1">
+                      <title>伪类与元素选择器3: 自定义单选按钮</title>
+                      <style type="text/css">
+                        *{
+                          margin: 0;
+                          padding: 0;
+                        }
+                        label{
+                          position:relative;
+                          float:left;
+                          width: 50px;
+                          height: 50px;
+                          background-color: lightpink;
+                          border: 4px solid #fff8fd;
+                          border-radius: 50%;
+                        }
+                        label > span{
+                          position:absolute;
+                          left:0;
+                          top: 0;
+                          bottom: 0;
+                          right: 0;
+                        }
+                        input{
+                          position: absolute;
+                          /* 移出可见区域 */
+                          left: -50px;
+                          top: -50px;
+                        }
+                        input:checked + span{
+                            background-color: aquamarine;
+                            border-radius: 50%;
+                        }
+                      </style>
+
+                  </head>
+                  <body>
+                      <label>
+                        <input type="radio" name="aria"/>
+                        <span></span>
+                      </label>
+                      <label>
+                        <input type="radio" name="aria"/>
+                        <span></span>
+                      </label>
+                      <label>
+                        <input type="radio" name="aria"/>
+                        <span></span>
+                      </label>
+                  </body>
+                  </html>
+
+       (4). 结构性伪类
+            结构性伪类允许基于DOM树中但不能由其他简单或组合选择器表示的额外信息进行选择；
+            计算元素在其同级列表中的位置时，不计算独立文本和其他非元素节点； index索引编号从1开始(index可以为even odd，4n+1等表达式)。
+
+            ① :root
+               :root伪类表示一个元素，该元素是文档的根。 在HTML 4中，始终是<html>元素。
+
+            ② #wrap ele:nth-child(index)		表示匹配#wrap中第index个子元素 这个子元素必须是ele
+               #wrap ele:nth-of-type(index)	表示匹配#wrap中第index个ele子元素
+               易混淆点：
+                   nth-child以家族关系为中心，而nth-of-type以元素为中心。
+
+                   :nth-child(index)系列
+                     :first-child
+                     :last-child
+                     :nth-last-child(index)
+                     :only-child	(相对于:first-child:last-child 或者 :nth-child(1):nth-last-child(1))
+
+                   :nth-of-type(index)系列
+                     :first-of-type
+                     :last-of-type
+                     :nth-last-type(index)
+                     :only-of-type	(相对于:first-of-type:last-of-type 或者 :nth-of-type(1):nth-last-of-type(1))
+
+            ③ :not
+               否定伪类是一种功能符号，它以简单的选择器(不包括否定伪类本身)为参数，代表一个其参数不表示的元素。
+               否定词不能嵌套, :not(:not(...))无效。另外，由于伪元素不是简单的选择器，因此它们不是:not()的有效参数。
+
+               演示代码:
+                     *:not(FOO)
+                     以下选择器组代表除链接之外的所有HTML元素。
+
+            ④ :empty
+               内容必须是空的，有空格也不行，但有attr则没有关系
+
+       (5). 伪元素
+            ::before  创建一个伪元素(默认为行内元素)，作为已选中元素的第一个子元素。
+            ::after  创建一个伪元素，作为已选中元素的最后一个子元素。:: before和:: after 一般配合content属性来为该元素添加装饰内容。
+            ::firstLetter，::first-letter  选中指定块级元素第一行的第一个字母，并且文字所处的行之前没有其他内容
+            ::firstLine  在指定块级元素的第一行应用样式。第一行的长度取决于很多因素，包括元素宽度，文档宽度和文本的文字大小。
+
+            注意事项
+                 和其他所有的伪元素一样，::first-line 不能匹配任何真实存在的html元素。
+                 由于::first-line 伪元素只能在块容器(一个display值为block, inline-block, table-cell或 table-caption的容器)中使用,
+                 在其他的类型中，使用::first-line 魔法是无效的！
+
+           ::selection CSS伪元素应用于文档中被用户高亮的部分（比如使用鼠标或其他选择设 备选中的部分）。
+
+
+6. css声明的优先级(重点）
+       这里的优先级描述的是css声明的优先级，而不是选择器的优先级，应注意区分！
+
+          选择器的特殊性
+              选择器的特殊性由选择器本身的组件确定，特殊性值表述为4个部分，如 0,0,0,0
+              一个选择器的具体特殊性确定：
+                     ① 对于选择器中给定的ID属性值，加 0,1,0,0
+                     ② 对于选择器中给定的各个类属性，属性选择，或伪类，加 0,0,1,0
+                     ③ 对于选择器中的给定的各个元素和伪元素，加0,0,0,1
+                     ④ 通配符选择器的特殊性为0,0,0,0
+                     ⑤ 结合符对选择器特殊性没有一点贡献
+                     ⑥ 内联声明的特殊性都是1,0,0,0
+                     ⑦ 继承对优先级没有影响
+
+                特殊性 1,0,0,0 大于所有以0开头的特殊性(不进位)
+                选择器的特殊性最终都会授予给其对应的声明
+                如果多个规则与同一个元素匹配，而且有些声明互相冲突时，特殊性越大的越占优势
+
+                注意：id选择器和属性选择器
+                      div[id="test"]（0,0,1,1） 和 #test（0,1,0,0）
+
+          !important(重要声明)
+              某个声明比较重要，超过了所有其他声明，css2.1中开始称之为重要声明。
+              在这些声明的结束分号之前插入!important  来标志重要性，注意---
+              !important 要放在声明的最后，即分号的前面；必须要准确的放置 !important，否则声明无效。
+
+              标志为 !important的声明并没有特殊的特殊性值，不过要与非重要声明分开考虑。
+              实际上所有的重要声明会被浏览器分为一组，重要声明的冲突会在其内部解决；
+              非重要声明也会被分为一组，非重要声明的冲突也会在其内部解决；
+              如果一个重要声明与非重要声明冲突，胜出的总是重要声明。
+
+          继承
+              继承没有特殊性，甚至连0特殊性都没有
+              "0"特殊性要比无特殊性来的强
+
+          来源
+              css样式的来源大致有三种：
+              读者
+              创作人员
+              用户代理
+
+          权重
+              读者的重要声明
+              创作人员的重要声明
+              创作人员的正常声明
+              读者的正常声明
+              用户代理的声明
+
+          层叠
+              1.找出所有相关的规则，这些规则都包含一个选择器
+              2.计算声明的优先级
+                优先按照来源排序
+                再按选择器的特殊性排序
+                最终按声明的顺序
+
+
+二、自定义字体和字体图标
+
+    字体图标(易于操作，不失真):
+           1. UI制作字体矢量图
+           2. 将矢量图与字符进行绑定
+           3. 由icomoon站点或其他字符集站点转化为字符集
+              icomoon字体图标: https://icomoon.io/#home
+              字体兼容处理打包网站: https://www.fontsquirrel.com/tools/webfont-generator
+              资源：阿里巴巴字体图标库    软件：AI cc，FontLab等
+           4. 使用字体
+
+    重要代码:
+           @font-face{
+               font-family:"Hiragino Maru Gothic ProN";
+               /* src: url("...");
+                  推荐使用这一种，好处：每个用户都能获取该字体；缺点：直接使用会增加网络复杂度。
+                  需求和性能之间的选择：一定先满足业务需求，再考虑性能优化！*/
+           }
+           #test{
+               font: 30px "Hiragino Maru Gothic ProN";
+           }
+
+
+三、新增UI方案
+
+    新增的UI方案包括：
+        文本新增样式(opacity，新增颜色模式，文字阴影，文字描边，文字排版);
+        盒模型新增样式(盒模型阴影，倒影，resize，box-sizing);
+        新增UI样式(圆角，边框图片，背景，渐变：线性&径向);
+        过渡(transition);
+        2D-3D变形(transform);
+        动画(animation);
+        布局扩展;
+
+    说明：
+        由于过渡(transition)，2D-3D变形(transform)，动画(animation)，和布局扩展是css3中尤为重要的部分，
+        本讲义将这四部分另写入魔法核心，实际上魔法核心一节的内容也属于新增UI方案范畴。
+        另外，除魔法核心外的重点，需要完全掌握的是：box-sizing，圆角，背景，其余魔法要用时再查看MDN或者其他相关api网站即可。
+
+
+1. 文本新增样式
+   (1). opacity：
+        指定了一个元素的透明度 0~1，适用于所有元素。
+        当opacity属性的值应用于某个元素上时，是把整个元素看作一个整体看待，即使opacity值没有被子元素继承。
+        因此，一个元素和它包含的子元素都会具有和元素背景相同的透明度，即使这个元素和它的子元素有不同的opacity属性值。
+
+   (2). 新增颜色样式rgba：
+        解决了背景透明，字体颜色不透明的需求。
+        格式：rgba(r,g,b,opacity)
+        应用：头像模糊背景效果等。
+
+   (3). 文字阴影：
+        text-shadow用来为文字添加阴影，而且可以添加多层，阴影值之间用逗号隔开（x轴偏移量，y轴偏移量，颜色，模糊程度）
+        重要代码：
+              div{
+                  ...
+                  text-shadow: 1px 1px 2px red, 0 0 1em blue, 0 0 0.2em blue;
+                  <!-- text-shadow: offset-x  offset-y  blur-radius  color,（可以多组) -->
+              }
+
+   (4). 文字描边：
+        只有webkit内核才支持：-webkit-text-stroke (了解，本质不属于魔法范围)
+
+   (5). 文字排版：
+        direction：
+        ltr 从左到右    rtl 从右到左
+        需要配合 Unicode-bidi:bidi-override 一起使用。
+
+        补充：溢出显示省略号效果
+        重要代码：
+               ...
+               displayL:block; /* 隐含条件：包裹区域由内容撑开 */
+               white-space:no-wrap;
+               overflow:hidden;
+               text-overflow:ellipsis
+
+
+2. 盒模型新增样式
+
+   ① box-shadow：
+      盒模型阴影。
+      格式：box-shadow: (inset) <offset-x> <offset-y> <blur-radius> color
+           第一个值"inset"是可选的，使用 inset 关键字会使得阴影落在盒子内部，这样看起来就像是内容凹陷了；
+           此时阴影会在边框之内 (包括透明边框）、背景之上、内容之下。
+           如果元素同时设置了 border-radius，阴影也会有圆角效果；多个阴影和多个 text-shadows 规则相同(第一个阴影在最外面)。
+           
+      重要代码：
+             #test{
+               ...
+               width: 100px;
+               height: 100px;
+               background-color: #bd9cff;
+               box-shadow: inset 10px 10px 20px 0px black; /* 注：第四个数值是阴影的大小，可以是负值，可自行测试不同值的效果 */
+               -webkit-box-reflect: left 10px; /* 警告：未录入标准的魔法，有兼容性问题，应谨慎使用 */
+             }
+      应用：给元素添加层次感，猎奇游戏元素
+
+   ② 倒影：
+      -webkit-box-reflect
+      渐变倒影：webkit-box-reflect:left 0px linear-gradient(...deg,rgba(,,,),rgba(,,,));
+
+   ③ resize：
+      使用 resize 法来控制一个元素的"可调整大小性"。
+      可选属性值：none | both | horizontal | vertical | block | inline
+      特别的，如果一个block元素设置过 overflow: visible，那么resize属性对该元素无效。
+
+   ④ box-sizing(重点)：
+      使用 box-sizing 魔法来引导浏览器用特定的方式计算一个元素的总宽度和总高度。
+      使用该魔法能够免除对 border 和 padding 计算上的顾虑。
+      可选属性值：
+          content-box                    border-box(不包含 margin)
+              尺寸公式：                       尺寸公式：
+                width = 内容的宽度               width = border + padding + 内容的宽度
+                height = 内容的高度              height = border + padding + 内容的高度
+
+      重要代码：
+             div {
+               width: 160px;
+               height: 80px;
+               padding: 20px;
+               border: 8px solid red;
+               background: yellow;
+             }
+
+             .content-box {
+               box-sizing: content-box;
+               /* Total width: 160px + (2 * 20px) + (2 * 8px) = 216px
+                  Total height: 80px + (2 * 20px) + (2 * 8px) = 136px
+                  Content box width: 160px
+                  Content box height: 80px */
+             }
+
+             .border-box {
+               box-sizing: border-box;
+               /* Total width: 160px
+                  Total height: 80px
+                  Content box width: 160px - (2 * 20px) - (2 * 8px) = 104px
+                  Content box height: 80px - (2 * 20px) - (2 * 8px) = 24px */
+             }
+
+
+3. 新增UI样式
+   ① 圆角(重点)
+      border-radius，css的一大突破；
+      使用该魔法直接"点方成圆"，不需要再使用背景图案来呈现圆角。默认值: 0 不可继承
+      该属性是一个简写属性，将这四个属性 border-top-left-radius、border-top-right-radius、border-bottom-right-radius、
+      border-bottom-left-radius 简写为一个属性。
+
+          请自行测试以下代码
+              border-radius: 30px;
+              border-radius: 25% 10%;
+              border-radius: 10% 30% 50% 70%;
+              border-radius: 10% / 50%;
+              border-radius: 10px 100px / 120px;
+              border-radius: 50% 20% / 10% 40%;
+
+          经典风车：
+                *{
+                  margin: 0;
+                  padding: 0;
+                }
+                html,body{
+                  height: 100%;
+                  overflow:hidden;
+                }
+                #wrap{
+                  position:absolute;
+                  margin: auto;
+                  width: 300px;
+                  height:300px;
+                  background-color: white ;
+                  border: 1px solid white;
+                  transition: 1.5s;
+                }
+                #wrap > div{
+                  margin: 10px;
+                  width: 130px;
+                  height: 130px;
+                  border: 5px solid #ffb6c1;
+                  background-color: ghostwhite;
+                  float: left;
+                  box-sizing: border-box;
+                }
+                #wrap > div:nth-child(1), div:nth-child(4){
+                  border-radius: 0 50% 0 50%;
+                }
+                #wrap > div:nth-child(2), div:nth-child(3){
+                  border-radius: 50% 0 50% 0;
+                }
+                #wrap:hover{
+                  -webkit-transform: rotate(360deg);
+                }
+                ...
+                <div id="wrap">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+
+   ② 边框图片
+      语法：border-image: image-source image-height image-width image-repeat;
+           div{
+               ...
+               -webkit-border-image:url(border.png) 30 30 round; /* Safari 5 */
+               -o-border-image:url(border.png) 30 30 round; /* Opera */
+               border-image:url(border.png) 30 30 round;
+           }
+
+      应用：多边框效果，九宫格特色效果(叫UI做九宫格图)
+
+   ③ 背景(重点)
+      默认情况下，背景图片是从padding box开始渲染，从border-box开始剪裁的
+
+          设置背景渲染的起始位置
+          background-origin: border-box/content-box;
+          background-clip: padding-box/content-box;
+
+          说明：
+              简写属性超过三个就不简写，建议分行写；
+              另外，background-image 一定要先于除 background-color的其他 background样式写，原因如下---
+              在背景图片（如果有设置）未载入之前，先显示的是背景颜色，默认为 transparent；接下来就是背景图片 background-image，没有此项，后面的样式就失去了意义。
+
+          正式语法：
+              <'border-image-source'> || <'border-image-slice'> [ / <'border-image-width'> | / <'border-image-width'>? /
+              <'border-image-outset'> ]? || <'border-image-repeat'>
+              关于属性值，请仔细参考MDN各属性对应值，尽量记忆并练习。
+
+          重要代码：
+                 div{
+                     ...
+                     background-color: lightpink;
+                     background-repeat: repeat;
+                     background-image: url("Face.pbm");
+                     background-origin: content-box;
+                     background-clip: padding-box;
+                     background-size: 100% 100%;
+                     /*-webkit-background-clip: text;*/
+                     ...
+                 }
+
+   ④ 渐变
+      浏览器支持两种类型的渐变：线性渐变(linear)和径向渐变(radial)，分别通过 linear-gradient 函数和 radial-gradient 函数定义。
+
+      线性渐变
+          实现线性渐变需要设置一个起始点和一个方向，和一个终止色。
+          重要代码：
+                 #test{
+                      ...
+                      background-image: linear-gradient(to top,red,deeppink,pink); /* 默认第一个数值为to bottom，从上到下 */
+                      /* background-image: linear-gradient(-60deg,red 10%,deeppink 30%,pink 50%);
+                         background-image: linear-gradient(-60deg,red,deeppink,pink); */
+                 }
+
+          应用：动态发廊灯，光斑动画(结合javascript)
+
+      径向渐变
+          radial-gradient: ; 展示由原点(origin)辐射开的颜色渐变，默认从里向外分配颜色
+                默认均匀分布     radial-gradient(red, blue);
+                不均匀分布     radial-gradient(red 50%, blue 70%);
+                改变渐变的形状      radial-gradient(circle, red, blue);
+
+                circle
+                ellipse(默认为椭圆)
+                其他属性值和详情请查看api～
+
+          应用：结合魔能核心你就能施展css魔法作出动画了 >>
+                   链接：http://www.jq22.com/code3057 (同时这也是一个在线代码编辑网站)
+
+
+四、魔法核心
+    1. 过渡(transition)
+       过渡魔法只能定义元素的初始状态和结束状态，不能截获元素变换的每一帧的状态
+       transition-duration：1s，0s，1s；对应值不够时复制列表，超过时裁剪，且必须加单位(包括0的情况)！不加单位会使过渡魔法失效。
+       transition-timing-function: cubic-bezier(,,,);
+       ...: stpes(5,start);
+
+       补充: 贝塞尔自定义
+       http://cubic-bezier.com
+
+       transition-delay: 3s; 延迟三秒执行
+
+       transitionend: DOM2事件
+       target.removeEventListener("transitionend", fn); //transitionend:可以控制DOM2事件的触发频率
+
+             DOM2事件：
+                 是一个属性维度的事件(每一个属性完成过渡都会触发该事件)
+                 DOM2与DOM0级事件绑定不同，DOM2不覆盖，会依次执行，dom1和dom2是可以共存的；
+                 监听方法，原生有两个方法用来添加和移除事件处理程序：addEventListener()和removeEventListener()
+                 只有DOM2包含3个事件：事件捕获阶段、处于目标阶段和事件冒泡阶段(js内容，此处不详细说明)
+
+                 [js] .removeEventListener:
+                      删除使用 EventTarget.addEventListener() 方法添加的事件。
+                      使用事件类型，事件侦听器函数本身，以及可能影响匹配过程的各种可选择的选项的组合来标识要删除的事件侦听器。
+
+       演示代码：
+              #test{
+                    ...
+                    transition-property: width,height;
+                    transition-duration: 2s;
+                    transition-timing-function: linear;
+              }
+
+       *********
+       魔法陷阱
+       *********
+       陷阱1:
+       css3渲染极快。同步异步问题。
+       transition在元素首次渲染还未结束的情况下是不会触发的!
+
+       情景一：
+            #test{
+                  width:100px;
+                  ...
+                  transition-property:width;
+            }
+            <script type="java/script">
+                  1.
+                  var test = document.querySelector("#test");
+                  test.style.width="300px"; //相当于初始化
+                  //alert(1);
+                  2.
+                  window.onload=function(){
+                      //setTimeout(function(){
+
+                      var test = document.querySelector("#test");
+                      test.style.width="300px"; //相当于初始化
+                      //test.style.width="100px"; //立即变回100px，不会看到300px
+                      //alert(1);
+
+                      //},3000)
+                  }
+            </script>
+
+       情景二：
+            <script type="java/script">
+
+                  window.onload=function(){
+                        var test = document.querySelector("#test");
+                        test.style.width="300px";
+                        document.documentElement.appendChild(test);
+                        setTimeout(function(){
+                            test.style.width="300px";
+                        },2000)
+                  }
+            </script>
+
+       陷阱2:
+       在绝大部分变换样式切换时，如果变换函数的位置/个数不相同，也不会触发transition
+       原理：transition底层使用了矩阵
+       论文：https://www.doc88.com/p-9025159153777.html (了解）
+
+       *********
+
+       transition简写属性
+       用于transition-property(name), transition-duration, transition-time-function(应用最广：贝塞尔),transition-delay
+       例：
+       transition: margin-right 2s ease-in-out .5s;
+
+       应用：扇形导航等。
+
+
+    2. 2D/3D变形(transform)
+
+       2D:
+       transform属性允许修改CSS视觉格式模型的坐标空间，只对block级元素（一般针对div）有效。
+       transform: rotate /translate(很多时候不会触发重新布局）/skew /scale(2)
+       transform-origin: top left/10px 30px;
+
+       transform的底层实现：矩阵
+       transform: matrix(1,0,0,1,300,y);
+       transform: matrix(Math.sin(2*<ath.PI),0,0,1,0);
+
+       变换组合要注意顺序，参考图片(变换组合(矩阵验证))；
+       可以从左向右想象变换，但事实上执行顺序是从右向左的(方法内部是直接计算初始点和最终点的)；
+
+       transform动画执行的顺序是从最外面的属性开始，
+       例如：transform: translateX(100px) rotate(30deg)，动画先旋转30度，然后再偏移100像素。
+
+       3D:
+
+       景深（deep of field，肉眼距离实物/屏幕的距离）继承性：否
+
+       原理：景深控制灭点的位置；
+       景深越大，灭点越远，元素变形越小；景深越小，灭点越近，元素变形越大；见图片景深
+       景深基点是视点的位置，perspective-origin默认为50% 50%。
+       #wrap{
+             perspective：100px;
+             /* 只能作用给子元素，需要一层wrap包裹创造子元素，
+             并且景深有叠加效果：如果在父元素的父元素上还设置了景深，那么作用在子元素上的景深会有叠加;
+             需要尽量避免景深叠加的问题，因为每款浏览器的叠加规则不尽相同
+             */
+             perspective-origin:left top;
+       }
+       #wrap .inner{
+             transform: rotateX(360deg);
+             transform: rotate3d(1,0,0,360deg);
+             transform: translate3d(-50%, -50%,0); /* 注意元素没有厚度，所以Z方向上的单独缩放无效，不能写百分比 */
+       }
+
+       3D缩放：
+       transform: translateZ(100px) scaleZ(2); 向前100px /* 同样要注意执行顺序 */
+       transform: scaleZ(2) translateZ(100px); 向前200px
+       transform: translateZ(200px); 向前200px
+
+       3D舞台:
+       transform-style: 营造有层次的3d舞台
+       transform-style: perserved-3d; /* 一定要给被作用元素的父元素而不是元素本身！ */
+       transform: rotateX(400deg) translateZ(100px);
+
+       应用：时钟、高亮按钮、透明旋转立方体等。
+
+
+    3. 动画(animation)
+        关键帧：
+        @keyframes 规则通过在动画序列中定义关键帧的样式来控制CSS动画序列中的中间步骤。JavaScript 可以通过 CSS对象模型接口CSSKeyframesRule 来访问 @keyframes。
+            keyframes-selector{
+                css-style;
+            }
+            @keyframes cam { /* 4个区间，4步 */
+              0%{}
+              25%{}
+              60%{}
+              75%{}
+              100%{}
+            }
+
+        在每个animation魔法定义中，顺序很重要，
+        <time>的第一个值被分配给animation-duration，第二个值分配给animation-delay
+        例：
+        animation: move 4s 2s both running 3 alternate steps(1,end);
+        注意：1. steps(1,end)不是指一个关键帧周期一步走完后停一下，而是一组%之间的声明部分一步走完后停
+             2. 4s分配完后如果还有声明没有完成则不会完成，直接进行下一次对关键这的执行
+
+        #test{
+              position: absolute;
+              left: 50%;
+              top: 50%;
+              /* transform: translate3d(-50%, -50%, 0); 垂直水平居中没有宽高的元素 */
+              ...
+              width: 100px;
+              height: 100px;
+              background: lightpink;            
+              
+
+              /* 动画内属性 */
+              animation-name: move; /* 关键帧的名称 */
+              animation-duration: 2s;
+              animation-timing-function: ease-in; /* 作用于一个关键帧周期，而不是整个动画周期 */
+              animation-direction: reverse; 
+              /* animation-direction: normal; 现在执行应为减速动画，反转的是关键帧的内容和animation-timing-function（现在执行应为减速动画）
+                 alternate：Form-to, to-from, from-to，反弹效果，应用：元素来回走动，使活灵活现 */
+
+              /* 动画外属性*/
+              animation-delay: 3s;
+              /* 只作用于动画内的属性，如 animation-iteration-count: 3; 只重复关键帧的内容
+                  不会在重复3次动画时重复动画外的属性如animation-duration; 还可以取值infinite，无限循环关键帧的内容 */
+              animation-iteration-count: 3;
+              /* transition: 3s; */
+
+              /* 元素在动画内的状态 */
+              animation-fill-mode: backwards;
+              /* animation-fill-mode: 管理所有动画外的状态：from之前，to之后
+                 none: 默认，动画外的状态保持在动画之前
+                 backwards: 关键帧from之前的状态和from的状态保持一致
+                 forwards: 关键帧to之后的状态和to的状态保持一致
+                 both: backwards +  forwards：
+                 键帧from之前的状态和from的状态保持一致,同时关键帧to之后的状态和to的状态保持一致
+              */
+         }
+         ...
+         /* 关键帧 */
+         @keyframes move {
+           from{
+             transform: rotate(0deg);
+           }to{
+             transform: rotate(360deg);
+           }
+         }
+
+         #wrap:hover #test{
+           animation-play-state: paused; /* 定义了动画执行的运行（running）与暂停（paused）*/
+         }
+
+        2D实例演示：
+               <!DOCTYPE html>
+               <html lang="en">
+               <head>
+                   <meta charset="UTF-8">
+                   <meta name="viewport" content="width=device-width, initial-scale=1">
+                   <title>2Dloading波动动画</title>
+                   <style type="text/css">
+                   /* 3D版本(有加载进度条)见此视频：https://www.bilibili.com/video/BV1vJ411K7aV?p=80 */
+                     *{
+                       margin: 0;
+                       padding: 0;
+                     }
+                     html,body{
+                       height: 100%;
+                       overflow: hidden;
+                     }
+                     #wrap{
+                       height: 100%;
+                       background-color: black;
+                     }
+                     .inner{
+                       text-align: center;
+                       position: absolute;
+                       left: 50%;
+                       top:50%;
+                       transform: translate3d(-50%, -50%, 0);
+                       white-space: nowrap;
+                     }
+                     .inner > span{ /* 不能用绝对定位，否则叠一起；也不能用transform，span是内联元素 */
+                       font: bold italic 16px Arial;
+                       position: relative;
+                       /* animation: move .8s linear infinite alternate */
+                     }
+
+                     @keyframes move {
+                       from{
+                         top: 0;
+                       }
+                       to{
+                         top: -10px;
+                       }
+                     }
+                   </style>
+               </head>
+               <body>
+                   <div id="wrap">
+                     <div class="inner">
+                       <span>Y</span>
+                       <span>o</span>
+                       <span>u</span>
+                       <span>&nbsp</span>
+                       <span>d</span>
+                       <span>i</span>
+                       <span>e</span>
+                       <span>d</span>
+                       <span>.</span>
+                       <span>.</span>
+                       <span>.</span>
+                     </div>
+                   </div>
+               </body>
+               <script type="text/javascript">
+                 window.onload=function () {
+                   let spanNode = document.querySelectorAll("#wrap > .inner > span");
+                   let color = ["orange","deeppink","pink","blue","violet","purple","skyblue","green","orange","pink","deeppink"];
+                   for(let i= 0; i < spanNode.length; i++){
+                     spanNode[i].style.animation="move .3s " + (i*50) +"ms linear infinite alternate";
+                     spanNode[i].style.color=color[i];
+                   }
+
+                 }
+               </script>
+               </html>
+
+
+    4. 布局扩展
+      (1). flex伸缩模型（重要）：
+           易操作，尤其适合移动端开发，实现等分布局
+           http://flexboxfroggy.com
+           https://blog.csdn.net/Allenyhy/article/details/81605547
+
+           演示代码(使用less预处理器)：
+                   #wrap{
+                          width: 80px;
+                          height: 300px;
+                          border: 1px solid;
+                          margin: 100px auto;
+                          display: flex;
+                          flex-wrap: wrap;
+
+                        .item{
+                              width: 50px;
+                              height: 50px;
+                              background: lightpink;
+                              text-align: center;
+                              line-height: 50px;
+                              float: left;
+
+                              /* 语法糖：flex: 1; 可以使用网页的inspect element(检查元素)展开，即为三行
+                                 建议初学魔法的各位法师少用语法糖，熟练原项后再使用；
+                                 用时也应考虑别人阅读你的文档时的便利性 */
+                              flex-shrink: 1;
+                              flex-grow: 1;
+                              flex-basis: 0;
+
+                        }
+                   }
+                   ...
+                   <div id="wrap">
+                      <div class="item">1</div>
+                      <div class="item">22</div>
+                      <div class="item">333</div>
+                      <div class="item">4444</div>
+                      <div class="item">55555</div>
+                    </div>
+
+      (2). 多列布局
+
+           演示代码：
+                 #wrap{
+                      border: 1px solid;
+                      width: 600px;
+                      margin: 0 auto;
+                      /*column-width: 200px;*/
+                      column-count: 3;
+                      column-gap: 30px;
+                      column-rule: solid rebeccapurple;
+                 }
+
+      (3). 响应式布局(重要）
+           pc，移动，平板端一统三方，css3媒体查询是响应式方法的核心
+           媒体查询
+           演示代码：
+                 html文档:
+                 <link rel="stylesheet" type="text/css" href="index.css" media="print"/>
+                      media="print" 表明本样式表只有在打印时才会显示，缺省值为media="screen"，显示在屏幕上
+                 ...
+
+                 对应的index.css文档:
+                 ...
+                 @media screen and (min-width: 800px){ /* 媒体查询选择器，>=800width的浏览器窗口都能应用 */
+
+                   /* @media screen and (xxx){
+                      xxx:
+                      1. min/max-width: 800px   浏览器窗口的尺寸
+                      2. min/max-device-width   设备独立像素（pc端：分辨率；移动端：查看机器的参数）
+                      3. -webkit-min/max-device-pixel-ratio
+                         dpr（device pixel ratio）：设备像素比，设备像素/设备独立像素，
+                                                   代表设备独立像素到设备像素的转换关系，在JS中可以通过 window.devicePixelRatio 获取
+                                                   可以将程序中使用到的CSS像素转换为设备像素，解决同样的图片在不同移动终端上显示存在差异的问题。
+
+                                                   当设备像素比为1:1时，使用1(1×1)个设备像素显示1个CSS像素；
+
+                                                   当设备像素比为2:1时，使用4(2×2)个设备像素显示1个CSS像素；
+
+                                                   当设备像素比为3:1时，使用9(3×3)个设备像素显示1个CSS像素。
+
+                      4. orientation: portrait/landscape   设置横竖屏
+                      } */
+                 }
+                 ...
+
+
+五、结语
+    css3的魔法书到这里就结束了，使用魔法网页，发挥你强大的魔力吧～
+
+    附:
+       本讲义中涉及到的css2.1的重要知识点，可见"css2.1讲义":
+       https://github.com/AAsteria/Web-develop/blob/master/css2.1
+
+
+
+
